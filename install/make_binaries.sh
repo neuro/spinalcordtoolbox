@@ -24,6 +24,10 @@ for program in $PROGRAM_LIST; do
   cmd="cd ${SCT_DIR_LOCAL}/dev/${program}/"
   echo ">> $cmd"; $cmd
 
+  #echo
+  #cmd="rm -rf build"
+  #echo ">> $cmd"; $cmd
+  
   echo
   cmd="rm ._*"
   echo ">> $cmd"; $cmd
@@ -56,9 +60,7 @@ for program in $PROGRAM_LIST; do
   cmd="cd .."
   echo ">> $cmd"; $cmd
 
-  echo
-  cmd="rm -rf build"
-  echo ">> $cmd"; $cmd
+  
 
 
 done

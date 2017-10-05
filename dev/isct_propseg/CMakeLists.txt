@@ -54,33 +54,10 @@ include_directories ("${PROJECT_SOURCE_DIR}/util")
 aux_source_directory(. SRC_LIST)
 aux_source_directory(./util SRC_LIST)
 add_executable(${PROJECT_NAME} ${SRC_LIST})
+add_definitions(-DVTK_MAJOR_VERSION=${VTK_MAJOR_VERSION})
 
 TARGET_LINK_LIBRARIES(isct_propseg
-ITKIONIFTI
-ITKIOImageBase
-ITKCommon
-ITKIONRRD
-ITKIOMRC
-ITKIOMeta
-ITKIOPNG
-ITKIOJPEG
-ITKIOIPL
-ITKIOLSM
-ITKIOMesh
-ITKIOTIFF
-ITKIOSiemens
-ITKIOSpatialObjects
-ITKIOVTK
-ITKIOXML
-ITKIOStimulate
-ITKIOBioRad
-ITKIOBMP
-ITKIOCSV
-ITKIOGDCM
-ITKIOGE
-ITKIOGIPL
-ITKIOHDF5
-ITKOptimizers
+${ITK_LIBRARIES}
 vtkalglib
 vtkCommonCore
 vtkCommonDataModel

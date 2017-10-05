@@ -443,7 +443,7 @@ CMatrix4x4 Mesh::ICP(Mesh *vTarget)
 	CMatrix4x4 transformation;
 	for (int i=0; i<4; i++) {
 		for (int j=0; j<4; j++)
-			transformation[4*j+i] = (*m)[i][j];
+			transformation[4*j+i] = m->GetElement(i,j);
 	}
 	
 	return transformation;
