@@ -378,7 +378,7 @@ CMatrix4x4 Mesh::ICP(Mesh *vTarget)
 	CMatrix4x4 transformation;
 	for (int i=0; i<4; i++) {
 		for (int j=0; j<4; j++)
-			transformation[4*j+i] = (*m)[i][j];
+			transformation[4*j+i] = m->GetElement(i,j);
 	}
 	
 	return transformation;
@@ -417,7 +417,7 @@ void Mesh::decimation(float nb)
  
 	vtkSmartPointer<vtkDecimatePro> decimate = vtkSmartPointer<vtkDecimatePro>::New();
 	#if VTK_MAJOR_VERSION <= 5
-		decimate->SetInputConnection(input->GetProducerPort());
+		decimate->SetInputData(input);
 	#else
 		decimate->SetInputData(input);
 	#endif
@@ -494,7 +494,7 @@ void Mesh::subdivision(int numberOfSubdivision, bool computeFinalMesh)
 	vtkSmartPointer<vtkLoopSubdivisionFilter> subdivisionFilter = vtkSmartPointer<vtkLoopSubdivisionFilter>::New();
 	subdivisionFilter->SetNumberOfSubdivisions(numberOfSubdivision);
 	#if VTK_MAJOR_VERSION <= 5
-		subdivisionFilter->SetInputConnection(input->GetProducerPort());
+		subdivisionFilter->SetInputData(input->GetProducerPort());
 	#else
 		subdivisionFilter->SetInputData(input);
 	#endif
