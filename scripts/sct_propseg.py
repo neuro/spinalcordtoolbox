@@ -379,10 +379,7 @@ if __name__ == "__main__":
 
     # Helping options
     use_viewer = None
-    if os.getenv("SCT_SCLICER", False):
-        use_optic = True
-    else:
-        use_optic = True  # enabled by default
+    use_optic = True  # enabled by default
     init_option = None
     if "-init-centerline" in arguments:
         if str(arguments["-init-centerline"]) == "viewer":
