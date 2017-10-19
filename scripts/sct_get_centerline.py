@@ -246,9 +246,8 @@ def run_main():
             verbose = 2
 
         # OptiC models
-        path_script = os.path.dirname(__file__)
-        path_sct = os.path.dirname(path_script)
-        optic_models_path = os.path.join(path_sct, 'data/optic_models', '{}_model'.format(contrast_type))
+        config = sct.Config()
+        optic_models_path = os.path.join(config.sct_data_path, 'optic_models', '{}_model'.format(contrast_type))
 
         # Execute OptiC binary
         _, centerline_filename = optic.detect_centerline(image_fname=fname_data,

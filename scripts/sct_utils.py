@@ -137,6 +137,16 @@ class bcolors(object):
         return [v for k, v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
 
 
+class Config:
+    """
+    Config value use all around the sct
+    """
+    def __init__(self):
+        sct_path = "".format(os.path.dirname(os.path.realpath(__file__)))
+        sct_path.rstrip("scripts")
+        self.sct_path = os.getenv("SCT_DIR", sct_path)
+        self.sct_data_path = os.getenv("SCT_DATA", "{}/data".format(self.sct_path))
+
 #=======================================================================================================================
 # add suffix
 #=======================================================================================================================

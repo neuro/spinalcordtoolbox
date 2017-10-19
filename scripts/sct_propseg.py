@@ -454,10 +454,9 @@ if __name__ == "__main__":
 
     # If using OptiC, enabled by default
     elif use_optic:
-        path_script = os.path.dirname(__file__)
-        path_sct = os.path.dirname(path_script)
-        path_classifier = os.path.join(path_sct,
-                                       'data/optic_models',
+        config = sct.Config()
+        path_classifier = os.path.join(config.sct_data_path,
+                                       'optic_models',
                                        '{}_model'.format(contrast_type))
 
         init_option_optic, optic_filename = optic.detect_centerline(fname_data,
