@@ -197,7 +197,7 @@ done
 
 # Catch SCT version
 if [ -e "version.txt" ]; then
-  if [ ${SCT_MPI_MODE} ]; then 
+  if [ ${SCT_MPI_MODE} ]; then
   echo "$(cat version.txt) mpi" > version.txt
   fi
   SCT_VERSION=`cat version.txt`
@@ -401,6 +401,17 @@ else
             and verify your internet connection before reinstalling"
     exit $e_status
   fi
+
+  if [ ${SCT_MPI_MODE} ]; then
+    conda install --yes --file ${SCT_SOURCE}/install/requirements/requirementsCondaMPI.txt
+    e_status=$?
+      if [ ${e_status} != 0 ] ; then
+        echo "MPI mode could not be installed, 'conda install' error with exit status $e_status.
+                Check logs for more details and verify your internet connection before reinstalling"
+        exit $e_status
+      fi
+  fi
+
   pip install  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
   e_status=$?
   if [ ${e_status} != 0 ] ; then
@@ -408,6 +419,17 @@ else
             and verify your internet connection before reinstalling"
     exit $e_status
   fi
+
+  if [ ${SCT_MPI_MODE} ]; then
+    pip install  -r ${SCT_SOURCE}/install/requirements/requirementsPipMPI.txt
+    e_status=$?
+      if [ ${e_status} != 0 ] ; then
+        echo "MPI mode could not be installed, 'pip install' error with exit status $e_status.
+                Check logs for more details and verify your internet connection before reinstalling"
+        exit $e_status
+      fi
+  fi
+
   # reinstall numpy at the end to prevent some bugs
   conda install -fy numpy=1.12.1
 
