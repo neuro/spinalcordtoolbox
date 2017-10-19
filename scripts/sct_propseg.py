@@ -380,7 +380,7 @@ if __name__ == "__main__":
     # Helping options
     use_viewer = None
     if os.getenv("SCT_SCLICER", False):
-        use_optic = False
+        use_optic = True
     else:
         use_optic = True  # enabled by default
     init_option = None
