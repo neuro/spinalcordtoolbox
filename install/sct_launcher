@@ -57,10 +57,16 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   export SCT_DIR=${SCT_DIR%/bin}
   export SCT_PYTHON=${SCT_DIR}/python
   export SCT_VERSION=$(cat $SCT_DIR/version.txt)
-  
+  export SCT_DATA=${SCT_DIR}/data
+
   export PATH
   export PYTHONPATH
   export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${logicalCpuCount}
+
+  if [ -e /etc/sct.conf ]; then
+  # Overwrite parameter with local config
+    . /etc/sct.conf
+  fi
 
   if [ -e ${HOME}/.sctrc ]; then
   # Overwrite parameter with local config
