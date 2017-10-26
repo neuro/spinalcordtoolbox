@@ -23,6 +23,8 @@ import subprocess
 import re
 from sys import stdout
 import logging
+import logging.config
+import json
 
 import glob
 import shutil
@@ -67,6 +69,20 @@ def start_stream_logger():
         stream_handler.setLevel(logging.INFO)
         log.addHandler(stream_handler)
 
+
+def sentry_handler():
+    import raven.handler.logging
+    from raven import Client
+
+    from raven.handlers.logging import SentryHandler
+    config = Config()
+
+    sh = SentryHandler(config.log_dns,level=logging.ERROR)
+
+    fmt = "{}-[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | " \
+           "%(message)s".format(config.version)
+    formater = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
+    formater.converter = time.gmtime()
 
 def pause_stream_logger():
     """ Pause the log to Terminal
@@ -136,6 +152,31 @@ class bcolors(object):
     def colors(cls):
         return [v for k, v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
 
+
+class Config:
+    """
+    Config value use all around the sct
+    """
+    _sentry_config = None
+    _log_dns = "https://14c24045ed8f4aab97dc86a3b034aa5e:0226d799eff8450da38beb87efbc904e@sentry.io/232808"
+
+
+    def __init__(self):
+        sct_path = "".format(os.path.dirname(os.path.realpath(__file__)))
+        sct_path.rstrip("scripts")
+        self.sct_path = os.getenv("SCT_DIR", sct_path)
+        self.sct_data_path = os.getenv("SCT_DATA", "{}/data".format(self.sct_path))
+        self.report_error = os.getenv('SCT_REPORT_ERROR',False)
+
+    @property
+    def version(self):
+        return '-'.join(get_sct_version())
+
+    @property
+    def log_dns(self):
+        if self.report_error:
+            return self._log_dns
+        return None
 
 #=======================================================================================================================
 # add suffix
