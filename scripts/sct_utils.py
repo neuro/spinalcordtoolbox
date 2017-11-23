@@ -52,7 +52,7 @@ if not LOG_FORMAT:
 
 
 def start_stream_logger():
-    """ Log to terminal, by default the formating is like a print() call
+    """ Log to terminal, by default the formatting is like a print() call
 
     :return: 
     """
@@ -70,19 +70,29 @@ def start_stream_logger():
         log.addHandler(stream_handler)
 
 
-def sentry_handler():
+def log_errors_to_servers:
+    pass
+
+def
+
+def server_handler():
+    """ This
+
+    :return:
+    """
     import raven.handler.logging
     from raven import Client
 
     from raven.handlers.logging import SentryHandler
     config = Config()
 
-    sh = SentryHandler(config.log_dns,level=logging.ERROR)
+    sh = SentryHandler(config.log_dns, level=logging.ERROR)
 
     fmt = "{}-[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | " \
            "%(message)s".format(config.version)
     formater = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
     formater.converter = time.gmtime()
+
 
 def pause_stream_logger():
     """ Pause the log to Terminal
