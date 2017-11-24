@@ -69,30 +69,57 @@ def start_stream_logger():
         stream_handler.setLevel(logging.INFO)
         log.addHandler(stream_handler)
 
+    report_errors_to_servers()
 
-def log_errors_to_servers:
-    pass
-
-def
-
-def server_handler():
-    """ This
+def report_errors_to_servers():
+    """ Send traceback to neuropoly servers
 
     :return:
     """
-    import raven.handler.logging
-    from raven import Client
+    config = Config()
+    if config.report_error:
+        import raven
+        log.info('Configuring sentry report')
+        client = raven.Client(dsn=config.log_dsn, release=config.version,
+                              processors=('raven.processors.RemoveStackLocalsProcessor',
+                                          'raven.processors.SanitizePasswordsProcessor'))
+        server_log_handler(client, config)
+        traceback_to_server(client, config)
+        log.info('sentry is set!')
+
+def traceback_to_server(client, config):
+    """
+        Send all traceback children of Exception to sentry
+    """
+
+    def excepthook(exctype, value, traceback):
+
+        if issubclass(exctype, config.sentry_exception_level):
+
+            client.captureException(exc_info=(exctype, value, traceback), level='fatal')
+        sys.__excepthook__(exctype, value, traceback)
+
+    sys.excepthook = excepthook
+
+
+def server_log_handler(client, config):
+    """ Adds sentry log handler to the logger
+
+    :return: the sentry handler
+    """
 
     from raven.handlers.logging import SentryHandler
-    config = Config()
 
-    sh = SentryHandler(config.log_dns, level=logging.ERROR)
+    sh = SentryHandler(client=client, level=config.sentry_log_level)
 
     fmt = "{}-[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | " \
            "%(message)s".format(config.version)
     formater = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
-    formater.converter = time.gmtime()
+    formater.converter = time.gmtime
+    sh.setFormatter(formater)
 
+    log.addHandler(sh)
+    return sh
 
 def pause_stream_logger():
     """ Pause the log to Terminal
@@ -168,24 +195,25 @@ class Config:
     Config value use all around the sct
     """
     _sentry_config = None
-    _log_dns = "https://14c24045ed8f4aab97dc86a3b034aa5e:0226d799eff8450da38beb87efbc904e@sentry.io/232808"
-
+    _log_dsn = "uggcf://14p24045rq8s4nno97qp86n3o034nn5r:0226q799rss8450qn38oro87rsop904r@fragel.vb/232808"
 
     def __init__(self):
         sct_path = "".format(os.path.dirname(os.path.realpath(__file__)))
         sct_path.rstrip("scripts")
         self.sct_path = os.getenv("SCT_DIR", sct_path)
         self.sct_data_path = os.getenv("SCT_DATA", "{}/data".format(self.sct_path))
-        self.report_error = os.getenv('SCT_REPORT_ERROR',False)
+        self.report_error = os.getenv('SCT_REPORT_ERROR', False)
+        self.sentry_log_level = logging.ERROR
+        self.sentry_exception_level = Exception
 
     @property
     def version(self):
         return '-'.join(get_sct_version())
 
     @property
-    def log_dns(self):
+    def log_dsn(self):
         if self.report_error:
-            return self._log_dns
+            return self._log_dsn.decode('rot13').decode('unicode-escape')
         return None
 
 #=======================================================================================================================

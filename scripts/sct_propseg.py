@@ -326,7 +326,6 @@ if __name__ == "__main__":
     parser = get_parser()
     args = sys.argv[1:]
     arguments = parser.parse(args)
-
     fname_input_data = arguments["-i"]
     fname_data = os.path.abspath(fname_input_data)
     contrast_type = arguments["-c"]
