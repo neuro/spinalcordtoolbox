@@ -121,6 +121,20 @@ def server_log_handler(client, config):
     log.addHandler(sh)
     return sh
 
+def sentry_handler():
+    import raven.handler.logging
+    from raven import Client
+
+    from raven.handlers.logging import SentryHandler
+    config = Config()
+
+    sh = SentryHandler(config.log_dns,level=logging.ERROR)
+
+    fmt = "{}-[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | " \
+           "%(message)s".format(config.version)
+    formater = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
+    formater.converter = time.gmtime()
+
 def pause_stream_logger():
     """ Pause the log to Terminal
     
