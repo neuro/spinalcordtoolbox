@@ -71,6 +71,7 @@ def start_stream_logger():
 
     report_errors_to_servers()
 
+
 def report_errors_to_servers():
     """ Send traceback to neuropoly servers
 
@@ -87,15 +88,14 @@ def report_errors_to_servers():
         traceback_to_server(client, config)
         log.info('sentry is set!')
 
+
 def traceback_to_server(client, config):
     """
         Send all traceback children of Exception to sentry
     """
 
     def excepthook(exctype, value, traceback):
-
         if issubclass(exctype, config.sentry_exception_level):
-
             client.captureException(exc_info=(exctype, value, traceback), level='fatal')
         sys.__excepthook__(exctype, value, traceback)
 
@@ -107,11 +107,9 @@ def server_log_handler(client, config):
 
     :return: the sentry handler
     """
-
     from raven.handlers.logging import SentryHandler
 
     sh = SentryHandler(client=client, level=config.sentry_log_level)
-
     fmt = "{}-[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | " \
            "%(message)s".format(config.version)
     formater = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
@@ -121,19 +119,6 @@ def server_log_handler(client, config):
     log.addHandler(sh)
     return sh
 
-def sentry_handler():
-    import raven.handler.logging
-    from raven import Client
-
-    from raven.handlers.logging import SentryHandler
-    config = Config()
-
-    sh = SentryHandler(config.log_dns,level=logging.ERROR)
-
-    fmt = "{}-[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | " \
-           "%(message)s".format(config.version)
-    formater = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
-    formater.converter = time.gmtime()
 
 def pause_stream_logger():
     """ Pause the log to Terminal
