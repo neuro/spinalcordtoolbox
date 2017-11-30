@@ -20,7 +20,7 @@ import commands
 
 from msct_image import Image
 from msct_parser import Parser
-from sct_utils import tmp_create, extract_fname, slash_at_the_end, printv, run, start_stream_logger
+from sct_utils import tmp_create, extract_fname, slash_at_the_end, printv, run, init_sct
 from sct_image import get_orientation, set_orientation
 
 
@@ -341,5 +341,5 @@ def main(args=None):
         printv('fslview ' + arguments["-i"] + ' ' + fname_out + ' -l Red & \n', verbose, 'info')
 
 if __name__ == "__main__":
-    start_stream_logger()
+    init_sct()
     main()

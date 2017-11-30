@@ -1051,7 +1051,7 @@ class SpinalCordStraightener(object):
 
 
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
 
     parser = Parser(__file__)
 

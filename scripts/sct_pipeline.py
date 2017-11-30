@@ -440,7 +440,7 @@ def get_parser():
 # Start program
 # ====================================================================================================
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
 
     addr_from = 'spinalcordtoolbox@gmail.com'
     parser = get_parser()

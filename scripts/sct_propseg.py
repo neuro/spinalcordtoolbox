@@ -322,7 +322,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
 
 
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     parser = get_parser()
     args = sys.argv[1:]
     arguments = parser.parse(args)

@@ -17,11 +17,6 @@
 # TODO: manage .cshrc files
 # TODO: add linux distrib when checking OS
 
-
-# DEFAULT PARAMETERS
-import sct_config
-
-
 class Param:
     # The constructor
     def __init__(self):
@@ -29,12 +24,13 @@ class Param:
         self.complete_test = 0
 
 
+import commands
+import importlib
+import os
+import platform
 import sys
 
-import os
-import commands
-import platform
-import importlib
+import sct_config
 import sct_utils as sct
 from msct_parser import Parser
 
@@ -404,7 +400,7 @@ def get_parser():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     # initialize parameters
     param = Param()
     # call main function

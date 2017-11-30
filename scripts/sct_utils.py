@@ -27,6 +27,10 @@ import time
 
 import sct_config
 
+if os.getenv('SENTRY_DSN', None):
+    # do no import if not needed
+    import raven
+
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
 
@@ -48,6 +52,15 @@ if not LOG_FORMAT:
     LOG_FORMAT = None
 
 
+def init_sct():
+    """ Initialize the sct for typical terminal usage
+
+    :return:
+    """
+    start_stream_logger()
+    report_errors_to_servers()
+
+
 def start_stream_logger():
     """ Log to terminal, by default the formatting is like a print() call
 
@@ -66,8 +79,6 @@ def start_stream_logger():
         stream_handler.setLevel(logging.INFO)
         log.addHandler(stream_handler)
 
-    report_errors_to_servers()
-
 
 def report_errors_to_servers():
     """ Send traceback to neuropoly servers
@@ -75,7 +86,6 @@ def report_errors_to_servers():
     :return:
     """
     if os.getenv('SENTRY_DSN'):
-        import raven
         log.info('Configuring sentry report')
         client = raven.Client(release=sct_config.__version__,
                               processors=('raven.processors.RemoveStackLocalsProcessor',
@@ -183,8 +193,6 @@ class bcolors(object):
     @classmethod
     def colors(cls):
         return [v for k, v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
-
-
 
 
 #=======================================================================================================================

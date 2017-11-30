@@ -21,7 +21,7 @@ from msct_parser import Parser
 from msct_types import Centerline
 from sct_image import get_orientation, set_orientation
 from sct_straighten_spinalcord import smooth_centerline
-from sct_utils import extract_fname, printv, slash_at_the_end, tmp_create, start_stream_logger
+from sct_utils import extract_fname, printv, slash_at_the_end, tmp_create, init_sct
 from skimage.measure import label
 
 
@@ -582,5 +582,5 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    start_stream_logger()
+    init_sct()
     main()

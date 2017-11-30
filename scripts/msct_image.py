@@ -1287,7 +1287,7 @@ def change_data_orientation(data, old_orientation='RPI', orientation="RPI"):
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     from msct_parser import Parser
     from sct_utils import add_suffix
     import sys
