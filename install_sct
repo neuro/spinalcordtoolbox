@@ -36,6 +36,7 @@ SCRIPT_DIR="scripts"
 DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
+STATS_DNS="https://github.com/poquirion/spinalcordtoolbox/releases/download/url_file/stats_dns.txt"
 
 # Force a clean exit
 finish ()
@@ -49,6 +50,8 @@ finish ()
     else
         echo "Installation failed"
     fi
+    # clean tmp_dir
+    rm ${TMP_DIR}
     exit ${value}
 }
 trap finish EXIT
@@ -251,6 +254,25 @@ else
   echo -e "sudo mode ........... 0"
 fi
 
+# Send crash statistic and error logs to developers, that is the
+# Questions
+echo
+cat <<EOF
+The SCT teams is constantly improving the toolbox and uses request and
+feedback to improve its user experience and fix bugs. We also have in
+place a system to receive anonymous crash report and errors from our
+users. If you want to participate and help the SCT improvement this way
+EOF
+read -p 'please type STATS [any other entry for no]:' -r REPORT_STATS
+
+if [[ ${REPORT_STATS} =~ [Ss][Tt][Aa][Tt][Ss] ]]; then
+  REPORT_STATS=yes
+  echo Crash report will be sent to the dev team. Thank you!
+else
+  unset REPORT_STATS
+  echo Not sharing crash report
+fi
+
 # Define sh files
 if echo $(ps -o comm= $PPID) | grep csh ;then
   THE_CSHRC=${HOME}/.cshrc
@@ -353,6 +375,13 @@ if [ ! -f "version.txt" ]; then
 fi
 
 ## Create launchers for Python scripts
+
+export SCT_ADD_ENV_VARS
+# add env vars to set in sct_laucher here SCT_ADD_ENV_VARS can have many lines
+if [ ${REPORT_STATS} ]; then
+  download "${TMP_DIR}/stats_dns.txt" "$STATS_DNS"
+  SCT_ADD_ENV_VARS="export SENTRY_DSN=$(cat ${TMP_DIR}/stats_dns.txt)"
+fi
 echo -e "\nCreate launchers for Python scripts"
 cmd="mkdir -p ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
 # update_bin has to be executed from the install directory

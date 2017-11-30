@@ -19,6 +19,9 @@
 
 
 # DEFAULT PARAMETERS
+import sct_config
+
+
 class Param:
     # The constructor
     def __init__(self):
@@ -111,11 +114,7 @@ def main():
     print ('SCT path: {0}'.format(path_sct))
 
     # fetch SCT version
-    install_type, sct_commit, sct_branch, version_sct = sct.get_sct_version()
-    print 'Installation type: git'
-    print '  version: ' + version_sct
-    print '  commit: ' + sct_commit
-    print '  branch: ' + sct_branch
+    print("SCT version: {}".format(sct_config.__version__))
 
     # check if Python path is within SCT path
     print_line('Check Python path')
@@ -175,7 +174,11 @@ def main():
         try:
             module = importlib.import_module(module)
             # get version
-            version = module.__version__
+            try:
+                version = module.__version__
+            except AttributeError:
+                # raven is not PEP8 friendly
+                version = module.VERSION
             # check if version matches requirements
             if check_package_version(version, version_requirements_pip, i):
                 print_ok()

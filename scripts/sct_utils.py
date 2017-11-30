@@ -13,22 +13,19 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import commands
 import errno
+import glob
+import logging
+import logging.config
+import os
+import re
+import shutil
+import subprocess
 import sys
 import time
 
-import os
-import commands
-import subprocess
-import re
-from sys import stdout
-import logging
-import logging.config
-import json
-
-import glob
-import shutil
-
+import sct_config
 
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
@@ -77,41 +74,40 @@ def report_errors_to_servers():
 
     :return:
     """
-    config = Config()
-    if config.report_error:
+    if os.getenv('SENTRY_DSN'):
         import raven
         log.info('Configuring sentry report')
-        client = raven.Client(dsn=config.log_dsn, release=config.version,
+        client = raven.Client(release=sct_config.__version__,
                               processors=('raven.processors.RemoveStackLocalsProcessor',
                                           'raven.processors.SanitizePasswordsProcessor'))
-        server_log_handler(client, config)
-        traceback_to_server(client, config)
+        server_log_handler(client)
+        traceback_to_server(client)
         log.info('sentry is set!')
 
 
-def traceback_to_server(client, config):
+def traceback_to_server(client):
     """
         Send all traceback children of Exception to sentry
     """
 
     def excepthook(exctype, value, traceback):
-        if issubclass(exctype, config.sentry_exception_level):
-            client.captureException(exc_info=(exctype, value, traceback), level='fatal')
+        if issubclass(exctype, sct_config.__report_exception_level__):
+            client.captureException(exc_info=(exctype, value, traceback))
         sys.__excepthook__(exctype, value, traceback)
 
     sys.excepthook = excepthook
 
 
-def server_log_handler(client, config):
+def server_log_handler(client):
     """ Adds sentry log handler to the logger
 
     :return: the sentry handler
     """
     from raven.handlers.logging import SentryHandler
 
-    sh = SentryHandler(client=client, level=config.sentry_log_level)
-    fmt = "{}-[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | " \
-           "%(message)s".format(config.version)
+    sh = SentryHandler(client=client, level=sct_config.__report_log_level__)
+    fmt = ("[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | "
+            "%(message)s")
     formater = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
     formater.converter = time.gmtime
     sh.setFormatter(formater)
@@ -189,31 +185,7 @@ class bcolors(object):
         return [v for k, v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
 
 
-class Config:
-    """
-    Config value use all around the sct
-    """
-    _sentry_config = None
-    _log_dsn = "uggcf://14p24045rq8s4nno97qp86n3o034nn5r:0226q799rss8450qn38oro87rsop904r@fragel.vb/232808"
 
-    def __init__(self):
-        sct_path = "".format(os.path.dirname(os.path.realpath(__file__)))
-        sct_path.rstrip("scripts")
-        self.sct_path = os.getenv("SCT_DIR", sct_path)
-        self.sct_data_path = os.getenv("SCT_DATA", "{}/data".format(self.sct_path))
-        self.report_error = os.getenv('SCT_REPORT_ERROR', False)
-        self.sentry_log_level = logging.ERROR
-        self.sentry_exception_level = Exception
-
-    @property
-    def version(self):
-        return '-'.join(get_sct_version())
-
-    @property
-    def log_dsn(self):
-        if self.report_error:
-            return self._log_dsn.decode('rot13').decode('unicode-escape')
-        return None
 
 #=======================================================================================================================
 # add suffix
@@ -283,63 +255,6 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
         # no need to output process.returncode (because different from 0)
         return status_output, output_final[0:-1]
 
-
-# =======================================================================================================================
-# Get SCT version
-# =======================================================================================================================
-def get_sct_version():
-
-    sct_commit = ''
-    sct_branch = ''
-
-    # get path of SCT
-    path_script = os.path.dirname(__file__)
-    path_sct = os.path.dirname(path_script)
-
-    # fetch true commit number and branch
-    path_curr = os.path.abspath(os.curdir)
-    os.chdir(path_sct)
-    # first, make sure there is a .git folder
-    if os.path.isdir('.git'):
-        install_type = 'git'
-        sct_commit = commands.getoutput('git rev-parse HEAD')
-        sct_branch = commands.getoutput('git branch | grep \*').strip('* ')
-        if not (sct_commit.isalnum()):
-            sct_commit = 'unknown'
-            sct_branch = 'unknown'
-        # print '  branch: ' + sct_branch
-    else:
-        install_type = 'package'
-    # fetch version
-    with open(path_sct + '/version.txt', 'r') as myfile:
-        version_sct = myfile.read().replace('\n', '')
-        # print '  version: ' + version_sct
-
-    # go back to previous dir
-    os.chdir(path_curr)
-    return install_type, sct_commit, sct_branch, version_sct
-
-#
-#
-#     # check if there is a .git repos
-#     if [-e ${SCT_DIR} /.git]; then
-#     # retrieve commit
-#     SCT_COMMIT = `git - -git - dir =${SCT_DIR} /.git
-#     rev - parse
-#     HEAD
-#     `
-#     # retrieve branch
-#     SCT_BRANCH = `git - -git - dir =${SCT_DIR} /.git
-#     branch | grep \ * | awk
-#     '{print $2}'
-#     `
-#     echo
-#     "Spinal Cord Toolbox ($SCT_BRANCH/$SCT_COMMIT)"
-#
-# else
-# echo
-# "Spinal Cord Toolbox (version: $SCT_VERSION)"
-# fi
 
 
 #=======================================================================================================================

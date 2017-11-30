@@ -467,31 +467,11 @@ class Usage:
         self.arguments_string = ''
         self.section = dict()
 
-#     def set_header(self):
-#         from time import gmtime
-#         from os.path import basename, getmtime
-#         creation = gmtime(getmtime(self.file))
-#         self.header = """
-# """+basename(self.file)+"""
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-# Version: """ + str(self.get_sct_version())
-
     def set_description(self, description):
         self.description = '\nDESCRIPTION\n' + self.align(description, length=100, pad=0)
 
     def addSection(self, section):
         self.section[len(self.arguments) + 1] = section
-
-    # def get_sct_version(self):
-    #     from commands import getstatusoutput
-    #     status, path_sct = getstatusoutput('echo $SCT_DIR')
-    #     fname = str(path_sct)+'/version.txt'
-    #     content = ""
-    #     with open(fname, mode = 'r') as f:
-    #         content = f.readlines()
-    #     f.close()
-    #     return content[0]
 
     def set_usage(self):
         from os.path import basename
