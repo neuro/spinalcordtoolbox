@@ -258,10 +258,10 @@ fi
 # Questions
 echo
 cat <<EOF
-The SCT teams is constantly improving the toolbox and uses request and
-feedback to improve its user experience and fix bugs. We also have in
-place a system to receive anonymous crash report and errors from our
-users. If you want to participate and help the SCT improvement this way
+The SCT team is constantly improving the toolbox and uses request and
+feedback to improve its user experience and fix bugs. We are using a 
+report system to receive anonymous crash reports and errors from our
+users. If you agree to participate and help improve the SCT 
 EOF
 read -p 'please type STATS [any other entry for no]:' -r REPORT_STATS
 
