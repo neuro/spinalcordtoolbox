@@ -257,18 +257,22 @@ else
   echo -e "sudo mode ........... 0"
 fi
 
-# Send crash statistic and error logs to developers, that is the
-# Questions
-echo
-cat <<EOF
+
+REPORT_STATS=no
+if [ -z ${NO_SCT_REPORT+x} ]; then
+  # Send crash statistic and error logs to developers, that is the
+  # Questions
+  echo
+  cat <<EOF
 The SCT teams is constantly improving the toolbox and uses request and
 feedback to improve its user experience and fix bugs. We also have in
 place a system to receive anonymous crash report and errors from our
 users. If you want to participate and help the SCT improvement this way
 EOF
-read -p 'please type STATS [any other entry for no]:' -r REPORT_STATS
+  read -p 'please type yes [no]:' -r REPORT_STATS
+fi
 
-if [[ ${REPORT_STATS} =~ [Ss][Tt][Aa][Tt][Ss] ]]; then
+if [[ ${REPORT_STATS} =~ yes ]]; then
   REPORT_STATS=yes
   echo Crash report will be sent to the dev team. Thank you!
 else
