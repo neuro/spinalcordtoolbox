@@ -152,6 +152,8 @@ usage()
 }
 
 
+set -e # abort on failure
+
 # SCRIPT STARTS HERE
 # ========================================================================
 echo -e "\nWelcome to the SCT installer!"
