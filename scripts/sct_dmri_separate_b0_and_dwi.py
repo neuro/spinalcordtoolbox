@@ -18,7 +18,7 @@ import math
 import time
 
 import os
-import commands
+
 import sct_utils as sct
 from msct_image import Image
 from sct_image import split_data
@@ -239,9 +239,9 @@ def main(args=None):
     # to view results
     sct.printv('\nTo view results, type: ', verbose)
     if average:
-        sct.printv('fslview b0 b0_mean dwi dwi_mean &\n', verbose)
+        sct.display_viewer_syntax(['b0', 'b0_mean', 'dwi', 'dwi_mean'])
     else:
-        sct.printv('fslview b0 dwi &\n', verbose)
+        sct.display_viewer_syntax(['b0', 'dwi'])
 
 
 # ==========================================================================================
@@ -261,7 +261,7 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
         bvecs = []
         with open(fname_bvecs) as f:
             for line in f:
-                bvecs_new = map(float, line.split())
+                bvecs_new = [x for x in map(float, line.split())]
                 bvecs.append(bvecs_new)
 
         # Check if bvecs file is nx3
@@ -275,7 +275,7 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
         nt = len(bvecs)
 
         # identify b=0 and dwi
-        for it in xrange(0, nt):
+        for it in range(0, nt):
             if math.sqrt(math.fsum([i**2 for i in bvecs[it]])) < 0.01:
                 index_b0.append(it)
             else:
@@ -293,7 +293,7 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
 
         # Identify b=0 and DWI images
         sct.printv('\nIdentify b=0 and DWI images...', verbose)
-        for it in xrange(0, nt):
+        for it in range(0, nt):
             if bvals[it] < bval_min:
                 index_b0.append(it)
             else:

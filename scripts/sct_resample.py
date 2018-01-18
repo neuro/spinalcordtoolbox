@@ -13,6 +13,7 @@
 import os
 import sys
 
+
 import sct_utils as sct
 from msct_parser import Parser
 import spinalcordtoolbox.resample.nipy_resample

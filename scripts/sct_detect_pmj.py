@@ -16,7 +16,7 @@ import sys
 import numpy as np
 from scipy.ndimage.measurements import center_of_mass
 import nibabel as nib
-import commands
+
 
 from msct_image import Image
 from msct_parser import Parser
@@ -100,7 +100,7 @@ class DetectPMJ:
         self.dection_map_pmj = sct.extract_fname(self.fname_im)[1] + '_map_pmj'  # file resulting from the detection
 
         # path to the pmj detector
-        self.pmj_model = os.path.join(commands.getstatusoutput('echo $SCT_DIR')[1],
+        self.pmj_model = os.path.join(sct.run('echo $SCT_DIR')[1],
                                             'data/pmj_models',
                                             '{}_model'.format(self.contrast))
 
@@ -282,7 +282,7 @@ def main(args=None):
     arguments = parser.parse(args)
 
     # Set param arguments ad inputted by user
-    fname_im = arguments["-i"]
+    fname_in = arguments["-i"]
     contrast = arguments["-c"]
 
     # Segmentation or Centerline line
@@ -322,7 +322,7 @@ def main(args=None):
         verbose = '1'
 
     # Initialize DetectPMJ
-    detector = DetectPMJ(fname_im=fname_im,
+    detector = DetectPMJ(fname_im=fname_in,
                             contrast=contrast,
                             fname_seg=fname_seg,
                             path_out=path_results,
@@ -338,8 +338,8 @@ def main(args=None):
 
     # View results
     if fname_out is not None:
-        sct.printv('\nDone! To view results, type:', verbose)
-        sct.printv('fslview ' + arguments["-i"] + ' ' + fname_out + ' -l Red & \n', verbose, 'info')
+        sct.display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'])
+
 
 if __name__ == "__main__":
     sct.init_sct()

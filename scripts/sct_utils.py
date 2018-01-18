@@ -13,7 +13,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import commands
 import errno
 import logging
 import logging.config
@@ -70,14 +69,17 @@ def start_stream_logger():
     formatter = logging.Formatter(LOG_FORMAT)
     stream_handler.setFormatter(formatter)
 
-    if LOG_LEVEL in logging._levelNames:
-        stream_handler.setLevel(LOG_LEVEL)
-        log.addHandler(stream_handler)
-    elif LOG_LEVEL == 'DISABLE':
-        stream_handler.setLevel(sys.maxint)
+    if LOG_LEVEL == "DISABLE":
+        level = sys.maxint
+    elif LOG_LEVEL is None:
+        level = logging.INFO
     else:
-        stream_handler.setLevel(logging.INFO)
-        log.addHandler(stream_handler)
+        level = getattr(logging, LOG_LEVEL, None)
+        if level is None:
+            logging.warn("SCT_LOG_LEVEL set to invalid value -> using default")
+            level = logging.INFO
+    stream_handler.setLevel(level)
+    log.addHandler(stream_handler)
 
 
 def report_errors_to_servers():
@@ -195,6 +197,67 @@ class bcolors(object):
         return [v for k, v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
 
 
+def no_new_line_log(msg, *args, **kwargs):
+    """ Log info to stdout without adding new line
+        Useful for progress bar.
+        Monkey patching the sct stream handler
+
+    see logging.info() method for parameters
+
+    """
+
+
+    def my_emit(self, record):
+        """
+        Emit a record.
+        Monkey patcher for progress bar in the sct
+        Do a carriage return \r before the string
+        instead of a new line \n at the end
+
+        """
+        try:
+            unicode
+            _unicode = True
+        except NameError:
+            _unicode = False
+
+        try:
+            msg = self.format(record)
+            stream = self.stream
+            fs = "\r%s"
+            if not _unicode: #if no unicode support...
+                stream.write(fs % msg)
+            else:
+                try:
+                    if (isinstance(msg, unicode) and
+                        getattr(stream, 'encoding', None)):
+                        ufs = u'%s\n'
+                        try:
+                            stream.write(ufs % msg)
+                        except UnicodeEncodeError:
+                            stream.write((ufs % msg).encode(stream.encoding))
+                    else:
+                        stream.write(fs % msg)
+                except UnicodeError:
+                    stream.write(fs % msg.encode("UTF-8"))
+            self.flush()
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            self.handleError(record)
+
+    orig_emit = stream_handler.__class__.emit
+    stream_handler.__class__.emit = my_emit
+
+    log.info(msg, *args, **kwargs)
+    if log.handlers:
+        [h.flush() for h in log.handlers]
+
+    stream_handler.__class__.emit = orig_emit
+
+
+
+
 #=======================================================================================================================
 # add suffix
 #=======================================================================================================================
@@ -222,14 +285,14 @@ def add_suffix(fname, suffix):
 def run_old(cmd, verbose=1):
     if verbose:
         printv(bcolors.blue + cmd + bcolors.normal)
-    status, output = commands.getstatusoutput(cmd)
+    status, output = run(cmd)
     if status != 0:
         printv('\nERROR! \n' + output + '\nExit program.\n', 1, 'error')
     else:
         return status, output
 
 
-def run(cmd, verbose=1, error_exit='error', raise_exception=False, cwd=None):
+def run(cmd, verbose=1, raise_exception=True, cwd=None):
     # if verbose == 2:
     #     printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
 
@@ -239,7 +302,7 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False, cwd=None):
     if verbose:
         printv("%s # in %s" % (cmd, cwd), 1, 'code')
 
-    if sys.hexversion < 0x0300000000 and isinstance(cmd, unicode):
+    if sys.hexversion < 0x03000000 and isinstance(cmd, unicode):
         cmd = str(cmd)
 
     shell = isinstance(cmd, str)
@@ -248,30 +311,115 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False, cwd=None):
     output_final = ''
     while True:
         # Watch out for deadlock!!!
-        output = process.stdout.readline()
+        output = process.stdout.readline().decode("utf-8")
         if output == '' and process.poll() is not None:
             break
         if output:
             if verbose == 2:
                 printv(output.strip())
             output_final += output.strip() + '\n'
-    status_output = process.returncode
+
+    status = process.returncode
+    output = output_final.rstrip()
+
     # process.stdin.close()
     # process.stdout.close()
     # process.terminate()
 
-    # need to remove the last \n character in the output -> return output_final[0:-1]
-    if status_output:
-        # from inspect import stack
-        printv(output_final[0:-1], 1, error_exit)
-        # in case error_exit is not error (immediate exit), the line below can be run
-        if raise_exception:
-            raise RunError(output_final[0:-1])
+    if status != 0 and raise_exception:
+        raise RunError(output_final[0:-1])
 
-        return status_output, output_final[0:-1]
+    return status, output
+
+
+def check_exe(name):
+    """
+    Ensure that a program exists
+    :type name: string
+    :param name: name or path to program
+    :return: path of the program or None
+    """
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(name)
+    if fpath and is_exe(name):
+        return fpath
     else:
-        # no need to output process.returncode (because different from 0)
-        return status_output, output_final[0:-1]
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, name)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
+
+def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='', verbose=1):
+    """
+    Print the syntax to open a viewer and display images for QC. To use default values, enter empty string: ''
+    Parameters
+    ----------
+    files [list:string]: list of NIFTI file names
+    colormaps [list:string]: list of colormaps associated with each file. Available colour maps: blue, blue-lightblue, cool, copper, cortical, green, greyscale, hot, hsv, pink, random, red, red-yellow, render1, render1t, render2, render2t, render3, retino, subcortical, yellow. Default=greyscale.
+    minmax [list:string]: list of min,max brightness scale associated with each file. Separate with comma.
+    opacities [list:string]: list of opacity associated with each file. Between 0 and 1.
+
+    Returns
+    -------
+    None
+
+    Example
+    -------
+    sct.display_viewer_syntax([file1, file2, file3])
+    sct.display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
+    """
+    list_viewer = ['fslview', 'fslview_deprecated', 'fsleyes']  # list of known viewers. Can add more.
+    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red', 'random': 'Random-Rainbow'}
+    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red', 'random': 'random'}
+    selected_viewer = None
+
+    # find viewer
+    exe_viewers = [viewer for viewer in list_viewer if check_exe(viewer)]
+    if exe_viewers:
+        selected_viewer = exe_viewers[0]
+    else:
+        return
+
+    # loop across files and build syntax
+    cmd = selected_viewer
+    # add mode (only supported by fslview for the moment)
+    if mode and selected_viewer in ['fslview', 'fslview_deprecated']:
+        cmd += ' -m ' + mode
+    for i in range(len(files)):
+        # add viewer-specific options
+        if selected_viewer in ['fslview', 'fslview_deprecated']:
+            cmd += ' ' + files[i]
+            if colormaps:
+                if colormaps[i]:
+                    cmd += ' -l ' + dict_fslview[colormaps[i]]
+            if minmax:
+                if minmax[i]:
+                    cmd += ' -b ' + minmax[i]  # a,b
+            if opacities:
+                if opacities[i]:
+                    cmd += ' -t ' + opacities[i]
+        if selected_viewer in ['fsleyes']:
+            cmd += ' ' + files[i]
+            if colormaps:
+                if colormaps[i]:
+                    cmd += ' -cm ' + dict_fsleyes[colormaps[i]]
+            if minmax:
+                if minmax[i]:
+                    cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
+            if opacities:
+                if opacities[i]:
+                    cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
+    cmd += ' &'
+    # display
+    if verbose:
+        printv('\nDone! To view results, type:')
+        printv(cmd + '\n', verbose=1, type='info')
 
 
 def copy(src, dst):
@@ -366,9 +514,11 @@ class Timer:
         remaining_time = remaining_iterations * time_one_iteration
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
-        log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-        if log.handlers:
-            [h.flush() for h in log.handlers]
+        no_new_line_log('Remaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '
+                        .format(int(hours), int(minutes), seconds, self.number_of_iteration_done,
+                         self.total_number_of_iteration))
+
+
 
     def iterations_done(self, total_num_iterations_done):
         if total_num_iterations_done != 0:
@@ -379,15 +529,17 @@ class Timer:
             remaining_time = remaining_iterations * time_one_iteration
             hours, rem = divmod(remaining_time, 3600)
             minutes, seconds = divmod(rem, 60)
-            log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-            if log.handlers:
-                [h.flush() for h in log.handlers]
+            no_new_line_log('Remaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '
+                            .format(int(hours), int(minutes), seconds, self.number_of_iteration_done,
+                             self.total_number_of_iteration))
+
 
     def stop(self):
         self.time_list.append(time.time() - self.start_timer)
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
-        printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+        log.info('\nTotal time: {:0>2}:{:0>2}:{:05.2f}                      '
+               .format(int(hours), int(minutes), seconds))
         self.is_started = False
 
     def printRemainingTime(self):
@@ -397,21 +549,17 @@ class Timer:
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-            if log.handlers:
-                [h.flush() for h in log.handlers]
+            no_new_line_log('Remaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
         else:
-            printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+            log.info('\nTotal time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
     def printTotalTime(self):
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
-            if log.handlers:
-                [h.flush() for h in log.handlers]
+            no_new_line_log('Remaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
         else:
-            printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+            log.info('\nTotal time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
 class ForkStdoutToFile(object):
     """Use to redirect stdout to file
@@ -546,7 +694,7 @@ def create_folder(folder):
         try:
             os.makedirs(folder)
             return 0
-        except OSError, e:
+        except OSError as e:
             if e.errno != errno.EEXIST:
                 return 2
     else:
@@ -728,7 +876,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
 #=======================================================================================================================
 # check if dependant software is installed
 def check_if_installed(cmd, name_software):
-    status, output = commands.getstatusoutput(cmd)
+    status, output = run(cmd)
     if status != 0:
         printv('\nERROR: ' + name_software + ' is not installed.\nExit program.\n')
         sys.exit(2)
@@ -1225,3 +1373,10 @@ class RunError(Error):
     sct runtime error
     """
     pass
+
+if __name__ == "__main__":
+    info = get_sct_version()
+    print(info)
+
+
+

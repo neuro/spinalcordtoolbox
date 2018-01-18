@@ -1,6 +1,8 @@
-import commands
+import io
 import os
 import logging
+import subprocess
+
 
 
 def _get_sct_version():
@@ -8,21 +10,28 @@ def _get_sct_version():
 
     :return: Tuple (install_type, sct_commit, sct_branch, version_sct)
     """
-    sct_commit = ''
-    sct_branch = ''
-    # fetch true commit number and branch
-    # first, make sure there is a .git folder
+    sct_commit = 'unknown'
+    sct_branch = 'unknown'
+
     if os.path.isdir(os.path.join(__sct_dir__, '.git')):
         install_type = 'git'
-        sct_commit = commands.getoutput('git rev-parse HEAD')
-        sct_branch = commands.getoutput('git branch | grep \*').strip('* ')
-        if not (sct_commit.isalnum()):
-            sct_commit = 'unknown'
-            sct_branch = 'unknown'
+        p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                         cwd=__sct_dir__)
+        output, _ = p.communicate()
+        status = p.returncode
+        if status == 0:
+            sct_commit = output
+        p = subprocess.Popen(["git", "rev-parse", "--abbrev-ref", "HEAD"], stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE, cwd=__sct_dir__)
+        output, _ = p.communicate()
+        status = p.returncode
+
+        if status == 0:
+            sct_branch = output
     else:
         install_type = 'package'
-    # fetch version
-    with open(os.path.join(__sct_dir__, 'version.txt'), 'r') as myfile:
+
+    with io.open(os.path.join(__sct_dir__, 'version.txt'), 'r') as myfile:
         version_sct = myfile.read().replace('\n', '')
 
     return install_type, sct_commit, sct_branch, version_sct

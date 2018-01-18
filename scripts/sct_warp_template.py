@@ -86,13 +86,13 @@ class WarpTemplate:
             sct.printv('\nWARP SPINAL LEVELS:', self.verbose)
             warp_label(self.path_template, self.folder_spinal_levels, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
 
-        # to view results
-        sct.printv('\nDone! To view results, type:', self.verbose)
-        sct.printv('fslview ' + self.fname_src + ' ' \
-                   + os.path.join(self.folder_out, self.folder_template, get_file_label(os.path.join(self.folder_out, self.folder_template), 'T2')) + ' -b 0,4000 ' \
-                   + os.path.join(self.folder_out, self.folder_template, get_file_label(os.path.join(self.folder_out, self.folder_template), 'vertebral')) + ' -l MGH-Cortical -t 0.5 ' \
-                   + os.path.join(self.folder_out, self.folder_template, get_file_label(os.path.join(self.folder_out, self.folder_template), 'gray matter')) + ' -l Red-Yellow -b 0.5,1 ' \
-                   + os.path.join(self.folder_out, self.folder_template, get_file_label(os.path.join(self.folder_out, self.folder_template), 'white matter')) + ' -l Blue-Lightblue -b 0.5,1 &\n', self.verbose, 'info')
+        sct.display_viewer_syntax([self.fname_src,
+                                   os.path.join(self.folder_out, self.folder_template, get_file_label(os.path.join(self.folder_out, self.folder_template), 'T2')),
+                                   os.path.join(self.folder_out, self.folder_template, get_file_label(os.path.join(self.folder_out, self.folder_template), 'gray matter')),
+                                   os.path.join(self.folder_out, self.folder_template, get_file_label(os.path.join(self.folder_out, self.folder_template), 'white matter'))],
+                                  colormaps=['gray', 'gray', 'red-yellow', 'blue-lightblue'],
+                                  opacities=['1', '1', '0.5', '0.5'],
+                                  verbose=param.verbose)
 
         if self.qc:
             from msct_image import Image
@@ -132,7 +132,7 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
         if not os.path.exists(os.path.join(path_out, folder_label)):
             os.makedirs(os.path.join(path_out, folder_label))
         # Warp label
-        for i in xrange(0, len(template_label_file)):
+        for i in range(0, len(template_label_file)):
             fname_label = os.path.join(path_label, folder_label, template_label_file[i])
             # check if file exists
             # sct.check_file_exist(fname_label)

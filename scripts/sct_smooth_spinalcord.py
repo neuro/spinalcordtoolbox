@@ -194,9 +194,7 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n')
 
-    # to view results
-    sct.printv('Done! To view results, type:', verbose)
-    sct.printv('fslview ' + file_anat + ' ' + file_anat + '_smooth &\n', verbose, 'info')
+    sct.display_viewer_syntax([file_anat, file_anat + '_smooth'], verbose=verbose)
 
 
 # START PROGRAM
@@ -235,7 +233,7 @@ if __name__ == "__main__":
 # y_centerline = [0 for iz in range(0, nz_nonz, 1)]
 # #sct.printv("z_centerline", z_centerline,nz_nonz,len(x_centerline)))
 # sct.printv('\nGet center of mass of the centerline ...')
-# for iz in xrange(len(z_centerline)):
+# for iz in range(len(z_centerline)):
 #     x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data_c[:,:,z_centerline[iz]]))
 #     data_temp[x_centerline[iz], y_centerline[iz], z_centerline[iz]] = 1
 #

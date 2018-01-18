@@ -209,11 +209,11 @@ def main(args=None):
         file = open(arguments['-initfile'], 'r')
         initfile = ' ' + file.read().replace('\n', '')
         arg_initfile = initfile.split(' ')
-        for i in xrange(len(arg_initfile)):
-            if arg_initfile[i] == '-initz':
-                initz = [int(x) for x in arg_initfile[i + 1].split(',')]
-            if arg_initfile[i] == '-initcenter':
-                initcenter = int(arg_initfile[i + 1])
+        for idx_arg, arg in enumerate(arg_initfile):
+            if arg == '-initz':
+                initz = [int(x) for x in arg_initfile[idx_arg + 1].split(',')]
+            if arg == '-initcenter':
+                initcenter = int(arg_initfile[idx_arg + 1])
     if '-initc2' in arguments:
         initc2 = 'manual'
     if '-param' in arguments:
@@ -318,8 +318,9 @@ def main(args=None):
 
     # Generate output files
     path_seg, file_seg, ext_seg = sct.extract_fname(fname_seg)
+    fname_seg_labeled = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "segmentation_labeled.nii.gz"), os.path.join(path_output, file_seg + '_labeled' + ext_seg))
+    sct.generate_output_file(os.path.join(path_tmp, "segmentation_labeled.nii.gz"), fname_seg_labeled)
     sct.generate_output_file(os.path.join(path_tmp, "segmentation_labeled_disc.nii.gz"), os.path.join(path_output, file_seg + '_labeled_discs' + ext_seg))
     # copy straightening files in case subsequent SCT functions need them
     sct.generate_output_file(os.path.join(path_tmp, "warp_curve2straight.nii.gz"), os.path.join(path_output, "warp_curve2straight.nii.gz"), verbose)
@@ -355,9 +356,7 @@ def main(args=None):
         sct.printv(err, verbose, 'warning')
         sct.printv('WARNING: Cannot generate report.', verbose, 'warning')
 
-    # to view results
-    sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv('fslview ' + fname_in + ' ' + os.path.join(path_output, file_seg + '_labeled') + ' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
+    sct.display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'random'], opacities=['1', '0.5'])
 
 
 # Detect vertebral levels
@@ -435,9 +434,10 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     # define mean distance (in voxel) between adjacent discs: [C1/C2 -> C2/C3], [C2/C3 -> C4/C5], ..., [L1/L2 -> L2/L3]
     centerline_level = data_disc_template[xct, yct, :]
     # attribute value to each disc. Starts from max level, then decrease.
+    # NB: value 2 means disc C2/C3 (and so on and so forth).
     min_level = centerline_level[centerline_level.nonzero()].min()
     max_level = centerline_level[centerline_level.nonzero()].max()
-    list_disc_value_template = range(min_level, max_level)
+    list_disc_value_template = list(range(min_level, max_level))
     # add disc above top one
     list_disc_value_template.insert(int(0), min_level - 1)
     sct.printv('\nDisc values from template: ' + str(list_disc_value_template), verbose)
@@ -470,15 +470,16 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         params = AnatomicalParams()
         params.num_points = 1
         params.vertebraes = [3, ]
+        params.subtitle = 'Click at the posterior tip of C2-C3 disc'
         input_file = Image(fname)
         output_file = input_file.copy()
         output_file.data *= 0
         output_file.setFileName(os.path.join(path_output, 'labels.nii.gz'))
         controller = launch_sagittal_dialog(input_file, output_file, params)
         mask_points = controller.as_string()
-
-        # assign new init_disc_z value, which corresponds to the first vector of mask_points. Note, we need to substract from nz due to SAL orientation: in the viewer, orientation is S-I while in this code, it is I-S.
-        init_disc = [nz - int(mask_points.split(',')[0]), 2]
+        # assign new init_disc_z value
+        # Note: there is a discrepancy between the label value (3) and the disc value (2). As of mid-2017, the SCT convention for disc C2-C3 is value=3. Before that it was value=2.
+        init_disc = [int(mask_points.split(',')[2]), 2]
 
     # display init disc
     if verbose == 2:
