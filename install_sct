@@ -268,7 +268,7 @@ feedback to improve its user experience and fix bugs. We are using a
 report system to receive anonymous crash reports and errors from our
 users. If you agree to participate and help improve the SCT
 EOF
-  read -p 'please type yes [no]:' -r REPORT_STATS
+  read -p 'please type yes [no] :' -r REPORT_STATS
 fi
 
 if [[ ${REPORT_STATS} =~ yes ]]; then
