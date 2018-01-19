@@ -89,12 +89,16 @@ def report_errors_to_servers():
     """
     if os.getenv('SENTRY_DSN'):
         log.info('Configuring sentry report')
-        client = raven.Client(release=sct_config.__version__,
-                              processors=('raven.processors.RemoveStackLocalsProcessor',
-                                          'raven.processors.SanitizePasswordsProcessor'))
-        server_log_handler(client)
-        traceback_to_server(client)
-        log.info('sentry is set!')
+        try:
+            client = raven.Client(release=sct_config.__version__,
+                                  processors=('raven.processors.RemoveStackLocalsProcessor',
+                                              'raven.processors.SanitizePasswordsProcessor'))
+            server_log_handler(client)
+            traceback_to_server(client)
+            log.info('sentry is set!')
+        except raven.exceptions.InvalidDsn:
+            # This could happen if sct staff change the dsn
+            log.debug('sentry dsn not valid anymore, not reporting errors')
 
 
 def traceback_to_server(client):
