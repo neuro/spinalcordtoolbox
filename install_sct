@@ -36,7 +36,7 @@ SCRIPT_DIR="scripts"
 DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
-STATS_DNS="https://github.com/poquirion/spinalcordtoolbox/releases/download/url_file/stats_dns.txt"
+STATS_DNS="https://www.neuro.polymtl.ca/_media/downloads/stats_dns.txt"
 
 # Force a clean exit
 finish ()
@@ -268,7 +268,7 @@ feedback to improve its user experience and fix bugs. We are using a
 report system to receive anonymous crash reports and errors from our
 users. If you agree to participate and help improve the SCT
 EOF
-  read -p 'please type yes [no] :' -r REPORT_STATS
+  read -p 'please type yes [no]:' -r REPORT_STATS
 fi
 
 if [[ ${REPORT_STATS} =~ yes ]]; then
