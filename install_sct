@@ -51,7 +51,7 @@ finish ()
         echo "Installation failed"
     fi
     # clean tmp_dir
-    rm ${TMP_DIR}
+    rm -r ${TMP_DIR}
     exit ${value}
 }
 trap finish EXIT
