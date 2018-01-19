@@ -257,8 +257,11 @@ else
   echo -e "sudo mode ........... 0"
 fi
 
+# If you do not want the crash reports question to be ask,
+# set ASK_REPORT_QUESTION at installation time like this:
+# >>> ASK_REPORT_QUESTION=false ./install_sct
 REPORT_STATS=no
-if [ -z ${NO_SCT_REPORT+x} ]; then
+if [[ ! ${ASK_REPORT_QUESTION} =~ ^([[Ff]alse?|[Nn]o?)$  ]]; then
   # Send crash statistic and error logs to developers, that is the
   # Questions
   echo
